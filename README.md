@@ -1,6 +1,6 @@
 # MetaHuman Mesh Tools
 
-![](https://github.com/Jeffreytsai1004/MetaHumanMeshTools/blob/main/MetaHumanMeshToolsIcon512.jpg)
+![Logo](https://github.com/Jeffreytsai1004/MetaHumanMeshTools/blob/main/MetaHumanMeshToolsIcon512.jpg)
 
 ## 介绍
 
