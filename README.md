@@ -2,114 +2,116 @@
 
 ![](/MetaHumanMeshToolsIcon512.jpg)
 
-## Introduction
+## 介绍
 
-The following describes a workflow for exporting, editing and reimporting MetaHuman meshes using Unreal Engine.
+下面描述了使用虚幻引擎导出、编辑和重新导入 MetaHuman 网格的工作流程。
 
-All of these notes are from personal experience and the processes that they rely on is subject to change. This guide assumes familiarity in working with Unreal, MetaHumans, Blender and skeletal meshes.
+下面描述了使用虚幻引擎导出、编辑和重新导入 MetaHuman 网格的工作流程。
 
-This repository also contains an Unreal plugin, which can be used to export and import MetaHuman meshes, and a Blender add-on, for importing a correct version of the face mesh into Blender. The use of these is explained below.
+所有这些注释均来自个人经验，它们所依赖的过程可能会发生变化。 本指南假定您熟悉使用 Unreal、MetaHumans、Blender 和骨架网格物体。
 
-### Installation instructions
+该存储库还包含一个 Unreal 插件，可用于导出和导入 MetaHuman 网格，以及一个 Blender 插件，用于将正确版本的面部网格导入 Blender。 这些的使用在下面解释。
 
-The Unreal plugin requires a working version of Visual Studio to be set up alongside Unreal Engine. See [this page](https://docs.unrealengine.com/5.1/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/) for more details.
+### 安装说明
 
-To install the Unreal plugin for a single project, create a new folder called 'Plugins' and copy the contents of the 'Unreal Plugin' folder of this repository into it. When you next open your project, Unreal will ask you whether it should rebuild the plugin. Choose yes to continue (this may take a minute). The plugin should be enabled by default in your plugins setup.
+Unreal 插件需要与 Unreal Engine 一起设置 Visual Studio 的工作版本。 有关详细信息，请参阅[此页面](https://docs.unrealengine.com/5.1/en-US/setting-up-visual-studio-development-environment-for-cplusplus-projects-in-unreal-engine/) .
 
-To install the Blender add-on, follow the instructions on [this page](https://docs.blender.org/manual/en/latest/editors/preferences/addons.html) under Installing add-ons. Use the 'import_unreal_metahuman_mesh.py' file found in the 'Blender Add-on' folder of this repository.
+要为单个项目安装 Unreal 插件，请创建一个名为“Plugins”的新文件夹，并将此存储库的“Unreal Plugin”文件夹的内容复制到其中。 当您下次打开项目时，Unreal 会询问您是否应该重建插件。 选择是继续（这可能需要一分钟）。 该插件应该在您的插件设置中默认启用。
 
-## On modifying MetaHumans
+要安装 Blender 附加组件，请按照安装附加组件下[本页](https://docs.blender.org/manual/en/latest/editors/preferences/addons.html) 中的说明进行操作。 使用此存储库的“Blender Add-on”文件夹中的“import_unreal_metahuman_mesh.py”文件。
 
-MetaHumans in Unreal can be modified almost completely, with only a few notable restrictions:
-- MetaHuman faces are animated using RigLogic, which adds a DNAAsset blob of data to the face mesh. This data is not modifiable through the editor and cannot be trivially copied over. This animation data overrides the facial bones, meaning the bone structure of the face cannot be changed. The face can be scaled, however, by setting the scale of the head (or neck) bone as the default pose for the body skeleton. This is described in more detail later.  
-Unreal has released [MetaHuman DNA Calibration](https://github.com/EpicGames/MetaHuman-DNA-Calibration) tools to modify DNA files, so even this restriction it not absolute.
-- The normal and tangent logic of the face relies on the vertex colors stored in the face mesh. These should be retained.
-- The face mesh uses blend shapes or morph targets to add further detail to and correct for deformation during facial animation. These should be retained. These blend shapes contain both position and normal deltas. Blend shapes with normal adjustments are not supported by Blender and will be lost upon import and export. This limitation is one of the primary motivations for the tools provided here.
-- The textures can be freely changed and can be assigned to a copy of the default material. It is also possible to swap the materials completely, but bear in mind that the default material contains logic to drive a set of albedo and normal maps. These contain additional details for wrinkles to match the facial animation.
+## 关于修改 MetaHumans
 
-Most of the animation for MetaHuman faces is driven by bones. Without straying too far from the original and its bone layout, it is entirely possible to modify the mesh in modelling software like Blender and retain good facial animation.
+Unreal 中的 MetaHumans 几乎可以完全修改，只有几个值得注意的限制：
+- MetaHuman 面部使用 RigLogic 进行动画处理，它将 DNAAsset 数据块添加到面部网格。 此数据无法通过编辑器修改，也无法轻易复制。 此动画数据会覆盖面部骨骼，这意味着无法更改面部的骨骼结构。 但是，可以通过将头部（或颈部）骨骼的比例设置为身体骨骼的默认姿势来缩放面部。 这将在后面更详细地描述。
+Unreal已经发布了修改DNA文件的【MetaHuman DNA Calibration】(https://github.com/EpicGames/MetaHuman-DNA-Calibration)工具，所以即使是这个限制也不是绝对的。
+- 面部的法线和切线逻辑依赖于存储在面部网格中的顶点颜色。 这些应该保留。
+- 面部网格使用混合形状或变形目标来添加更多细节并校正面部动画期间的变形。 这些应该保留。 这些混合形状包含位置增量和法线增量。 Blender 不支持具有正常调整的混合形状，并且会在导入和导出时丢失。 此限制是此处提供的工具的主要动机之一。
+- 纹理可以自由更改，并可以分配给默认材质的副本。 也可以完全交换材质，但请记住，默认材质包含驱动一组反照率和法线贴图的逻辑。 这些包含皱纹的额外细节以匹配面部动画。
 
-The body meshes only use regular skeletal deformation. This makes working with them similar to any other skeletal mesh.
+MetaHuman 面部的大部分动画都是由骨骼驱动的。 在不偏离原始模型及其骨骼布局太远的情况下，完全可以在 Blender 等建模软件中修改网格并保留良好的面部动画。
 
-## Workflow overview
+身体网格仅使用常规骨骼变形。 这使得使用它们类似于任何其他骨架网格物体。
 
-This guide describes how a MetaHuman can be exported from Unreal, imported into Blender, modified, reexported and reimported into Unreal.
+## 工作流程概述
 
-Most of this process can be done using FBX, but supporting the morph targets of the face mesh through Blender makes the process a bit more cumbersome. Instead of exporting and importing the morph targets as part of the FBX file, this guide takes the approach of leaving them out completely. Instead, they are copied over from the original MetaHuman face mesh in Unreal after reimporting the FBX file. To make this work, this guide assumes the topology of the face mesh is not changed. This allows the vertex order to remain exactly the same between the original face mesh asset and the changed version, which makes copying over the morph targets relatively easy and accurate.
+本指南描述了如何从 Unreal 中导出 MetaHuman、导入到 Blender 中、修改、重新导出和重新导入到 Unreal 中。
 
-### Exporting from Unreal
+这个过程的大部分都可以使用 FBX 完成，但是通过 Blender 支持面部网格的变形目标使得这个过程有点麻烦。 本指南没有将变形目标作为 FBX 文件的一部分导出和导入，而是采用了将它们完全排除在外的方法。 相反，它们是在重新导入 FBX 文件后从 Unreal 中的原始 MetaHuman 面部网格复制过来的。 为实现此目的，本指南假定面部网格的拓扑结构未更改。 这允许顶点顺序在原始面部网格资产和更改版本之间保持完全相同，这使得复制变形目标相对容易和准确。
 
-For both exporting from Unreal and reimporting back into Unreal, this guide only considers the base Level of Detail. Methods to recreate LOD levels for the modified mesh are left as an exercise to the reader.
+### 从虚幻中导出
 
-MetaHumans consist of separate meshes for the face, the body and clothing.
-- The face mesh can be found under 'MetaHumans / \<YourMetaHuman\> / Face'.
-- The body mesh can be found under '\<Male or Female\> / \<Height\> / \<Weight\> / Body'.
+对于从 Unreal 导出和重新导入到 Unreal 中，本指南仅考虑基本细节级别。 为修改后的网格重新创建 LOD 级别的方法留给读者作为练习。
 
-You will need to export these as FBX files. When exporting, make sure to uncheck LOD levels and Morph Targets.
+MetaHumans 由面部、身体和衣服的独立网格组成。
+- 面部网格可以在“MetaHumans / \<YourMetaHuman\> / Face”下找到。
+- 身体网格可以在“\<Male or Female\> / \<Height\> / \<Weight\> / Body”下找到。
 
-For the face mesh, you will need an exact copy of the original FBX data used to import the MetaHuman. This is provided by the Unreal Plugin in this repository. When installed, right-click on the face mesh asset and select 'Scripted Asset Actions / MetaHuman Mesh Tools / Face Raw Export'. This will result in a raw json file which can be imported to Blender using the provided Blender add-on.
+您需要将它们导出为 FBX 文件。 导出时，确保取消选中 LOD 级别和变形目标。
 
-### Importing into Blender
+对于面部网格，您需要一个精确的副本
 
-Basic importing:
+### 导入Blender
 
-- For both the face and the body, import from the FBX as normal.
-- Select the 'root' armature object and unparent it (alt-P), keeping the transform. Remove the old parent object. This should leave just the armature and a single child mesh. Note that the armature for the face and body are different and must both be kept.
+基本导入：
 
-For the face geometry:
+- 对于脸部和身体，照常从 FBX 导入。
+- 选择“根”骨架对象并取消它的父级（alt-P），保持变换。 删除旧的父对象。 这应该只留下骨架和一个子网格。 请注意，面部和身体的骨架不同，必须同时保留。
 
-- Remove the imported face mesh, but keep the armature.
-- Import the Unreal MetaHuman Mesh (.json) file.
-- Parent the new face mesh under the armature and add an armature modifier to it, pointing to its parent.
+对于面部几何：
 
-With this setup, you are already set to export. For your first try, it is recommended to skip modifying your MetaHuman and continue with exporting from Blender.
+- 移除导入的面网格，但保留骨架。
+- 导入 Unreal MetaHuman Mesh (.json) 文件。
+- 为骨架下的新面网格添加一个骨架修改器，指向它的父级。
 
-### Modifying the mesh in Blender
+使用此设置，您已经设置为导出。 对于您的第一次尝试，建议跳过修改您的 MetaHuman 并继续从 Blender 导出。
 
-Here are some tips, dos and don'ts:
-- When working with the face mesh, you cannot change the facial bones. It is possible to scale the entire face, but this should only be applied to the armature of the body mesh, which also contains bones for the neck and head. By adjusting the scale of those bones, the head will be scaled with it in Unreal. Attempting to set a scale for the face mesh itself will cause issues with the visible bounding boxes of the groom assets.
-  - Since the facial bones cannot be adjusted, the eyes cannot be moved. The alignment of the mesh around the eyes with their bones is important for animation. However, they can be scaled relatively well within reasonable limits.
-  - Most other bones in the face are animated only by translation. This means they do not need to strictly match the position of their skinned vertices. You may be surprised by how much the mesh can be changed and moved without breaking the facial animation.
-- The topology of the facial mesh may not be changed to ensure the morph targets can be safely copied over later. This means you cannot merge any vertices, change the triangulation or add new parts.
-  - Since there is no way to set up a Mirror modifier, Sculpt tools are a quick alternative for making symmetric changes. Sculpting does have a tendency to mess up the 'Custom Split Normals'. It can help to create a copy of your mesh to preserve the original custom normals. You can copy these over to your modified version with a Data Transfer modifier.
-- The bones of the body mesh can be adjusted as needed. When changing either the body mesh itself or its bones, note that the helper bones set up around the core skeleton are animated to follow its pose. This animation is adjusted to work with the current body shape and may create unnatural looking deformations when the mesh or skeleton is adjusted.
-  - As mentioned before, the body mesh and its skeleton use a regular skeletal mesh setup. All of the standard practices apply.
-- To avoid visible seams between the face and the body mesh, you will need to ensure they have matching vertex positions, normals and skinning weights. It may help to set up modifiers to transfer some of these to your meshes.
-  - For the normals, it is recommended to create a copy of the face and body mesh where the two are merged together. This can be used as a source for a Data Transfer modifier to copy over normals. Take care not to override all the normals of the face mesh.
+### 在 Blender 中修改网格
 
-### Exporting from Blender
+以下是一些提示、注意事项和注意事项：
+- 使用面部网格时，您无法更改面部骨骼。 可以缩放整个面部，但这只能应用于身体网格的骨架，其中还包含颈部和头部的骨骼。 通过调整这些骨骼的比例，头部将在 Unreal 中随之缩放。 尝试为面部网格本身设置比例会导致新郎资产的可见边界框出现问题。
+   - 由于无法调整面部骨骼，因此无法移动眼睛。 眼睛周围的网格与其骨骼对齐对于动画很重要。 但是，它们可以在合理的范围内相对较好地缩放。
+   - 面部的大多数其他骨骼仅通过平移进行动画处理。 这意味着它们不需要严格匹配蒙皮顶点的位置。 您可能会惊讶于在不破坏面部动画的情况下可以更改和移动多少网格。
+- 不得更改面部网格的拓扑结构，以确保以后可以安全地复制变形目标。 这意味着您不能合并任何顶点、更改三角剖分或添加新部分。
+   - 由于无法设置镜像修改器，因此雕刻工具是进行对称更改的快速替代方法。 雕刻确实有弄乱“自定义分割法线”的趋势。 它有助于创建网格副本以保留原始自定义法线。 您可以使用数据传输修改器将这些复制到修改后的版本。
+- 身体网格的骨骼可以根据需要进行调整。 更改身体网格本身或其骨骼时，请注意围绕核心骨骼设置的辅助骨骼会设置动画以跟随其姿势。 此动画经过调整以适应当前的身体形状，并且在调整网格或骨架时可能会产生看起来不自然的变形。
+   - 如前所述，身体网格及其骨架使用常规骨架网格设置。 所有标准做法均适用。
+- 为避免面部和身体网格之间出现可见接缝，您需要确保它们具有匹配的顶点位置、法线和蒙皮权重。 设置修改器以将其中一些转移到您的网格可能会有所帮助。
+   - 对于法线，建议创建面部和身体网格的副本，将两者合并在一起。 这可以用作数据传输修改器的来源以复制法线。 注意不要覆盖面部网格的所有法线。
 
-To export, simply export to FBX as normal. There are a few important points to check:
-- The face and body are exported separately.
-- For both the face and body, you should only export a single mesh and its armature. It may help to export these as your active selection.
-- The armature object should not have a parent and must be named 'root'. If you have both a face and body armature in the same scene, these cannot have the same name, so you will always need to check and adjust the name before exporting.
-- The mesh should have an armature modifier, pointing to its parent, as the last modifier on the stack. Any modifiers before this will be applied automatically on export.
+### 从Blender导出
 
-### Importing into Unreal
+要导出，只需照常导出为 FBX。 有几个要点需要检查：
+- 脸部和身体分开导出。
+- 对于面部和身体，您应该只导出一个网格及其骨架。 将这些导出为您的活动选择可能会有所帮助。
+- 骨架对象不应有父对象且必须命名为“root”。 如果您在同一场景中同时拥有面部和身体骨架，则它们不能具有相同的名称，因此您始终需要在导出前检查和调整名称。
+- 网格应该有一个骨架修改器，指向它的父级，作为堆栈中的最后一个修改器。 在此之前的任何修改器将在导出时自动应用。
 
-Importing into Unreal is done by creating a copy of the original MetaHuman mesh and overriding the mesh geometry with the given FBX. You will also be creating a copy of the blueprint for the entire MetaHuman.
-- First, copy either the face or body mesh to your own asset. It is recommended to place these copies outside of the default MetaHumans folder, since the contents of that folder are managed by the Quixel Bridge plugin.
-- Open the copy to change its settings
-  - Under LOD Settings, set the 'Number of LODs' to 1 and click 'Apply Changes' below it.
-  - Under Import Settings, uncheck 'Update Skeleton Reference Pose', check 'Use T0 As Ref Pose' and set the Import Rotation to all 0.
-  - Save the asset.
-- Click Reimport Base Mesh and select the FBX file containing your adjusted MetaHuman mesh.
-  - This step should not prompt any material assignment issues. If anything should go wrong, check the exported material names against the 'Slot Names' under Material Slots. It is likely faster to recreate your mesh copy asset instead of attempting to fix the material assignments by hand.
-  - The new MetaHuman mesh should have the same number of Verts as the original, but the bone influences may vary a bit.
-  - The newly imported mesh does not yet have morph targets applied, but the display of these in the asset viewer is not immediately updated. Reopening the window shows they are now missing.
+### 导入虚幻引擎
+
+导入虚幻引擎是通过创建原始 MetaHuman 网格的副本并使用给定的 FBX 覆盖网格几何体来完成的。 您还将为整个 MetaHuman 创建蓝图的副本。
+- 首先，将面部或身体网格复制到您自己的资产中。 建议将这些副本放在默认的 MetaHumans 文件夹之外，因为该文件夹的内容由 Quixel Bridge 插件管理。
+- 打开副本以更改其设置
+   - 在 LOD 设置下，将“LOD 数量”设置为 1，然后单击其下方的“应用更改”。
+   - 在导入设置下，取消选中“更新骨架参考姿势”，选中“使用 T0 作为参考姿势”并将导入旋转设置为全 0。
+   - 保存资产。
+- 单击 Reimport Base Mesh 并选择包含调整后的 MetaHuman 网格的 FBX 文件。
+   - 此步骤不应提示任何材料分配问题。 如果出现任何问题，请根据材质插槽下的“插槽名称”检查导出的材质名称。 重新创建网格副本资产可能比尝试手动修复材质分配更快。
+   - 新的 MetaHuman 网格应该具有与原始网格相同的 Verts 数量，但骨骼影响可能会有所不同。
+   - 新导入的网格尚未应用变形目标，但资产查看器中的这些显示不会立即更新。 重新打开窗口显示他们现在不见了。
   
-For body meshes, you are already done. For face meshes, the morph targets still need to be transferred from the original MetaHuman mesh.
-- Right click on your new face mesh asset and select 'Scripted Asset Actions / MetaHuman Mesh Tools / Face Morph Target Copy'. A dialog window will open.
-- Set the original MetaHuman face mesh as the Source Mesh and click OK.
-- The face should now be fully ready and should animate like the original.
-  - The copying of the morph targets may fail if the number of vertices in the mesh assets changed. This may happen due to minor differences in vertex position, which can cause different merges of overlapping vertices. If this should fail, a warning is printed to the Output Log.
-  - A quick check whether the morph targets work is by closing the MetaHuman's eyes. The line where the eyelid is folded back when the eye is opened should dissappear when it closes.
+对于身体网格，您已经完成了。 对于面部网格，变形目标仍然需要从原始的 MetaHuman 网格传输。
+- 右键单击您的新面部网格资产并选择“脚本化资产操作/MetaHuman 网格工具/面部变形目标复制”。 将打开一个对话窗口。
+- 将原始的 MetaHuman 面部网格设置为源网格，然后单击确定。
+- 脸部现在应该已经完全准备好，并且应该像原来的那样动画。
+   - 如果网格资产中的顶点数量发生变化，则变形目标的复制可能会失败。 这可能是由于顶点位置的微小差异而发生的，这可能导致重叠顶点的不同合并。 如果失败，则会在输出日志中打印一条警告。
+   - 通过闭上超人的眼睛来快速检查变形目标是否有效。 睁眼时眼睑向后折叠的线条在闭眼时应该消失。
   
-Next, you will need to create your own copy of the MetaHuman blueprint to assign your meshes to it.
-- Copy the blueprint from 'MetaHumans / \<YourMetaHuman\> / BP_\<YourMetaHuman\>' to your own asset. Again, it is recommended to place this copy outside of the default MetaHumans folder.
-- Open the blueprint and find the Body or Face listed in the Components. Simply assign your mesh as their 'Skeletal Mesh Asset', save and compile.
+接下来，您将需要创建您自己的 MetaHuman 蓝图副本以将您的网格分配给它。
+- 将蓝图从 'MetaHumans / \<YourMetaHuman\> / BP_\<YourMetaHuman\>' 复制到您自己的资产中。 同样，建议将此副本放在默认的 MetaHumans 文件夹之外。
+- 打开蓝图并找到组件中列出的身体或面部。 只需将您的网格指定为其“骨架网格资产”，保存并编译。
 
-Grooms, the assets for hair, bind to the face geometry. If you change the face, you will need to create a copy of the groom's Binding Asset.
-- Navigate to each of your used groom components, and click the Browse button below the Binding Asset to select the asset file. Create another copy outside the MetaHumans folder.
-- Open your new Binding Asset, assign the original MetaHuman face mesh as the 'Source Skeletal Mesh' and assign your own face mesh as the 'Target Skeletal Mesh'
-- Assign your new Bindind Asset in your MetaHuman blueprint.
+Grooms，头发的资产，绑定到面部几何体。 如果您更改面部，则需要创建新郎绑定资产的副本。
+- 导航到您使用的每个Groom组件，然后单击绑定资产下方的浏览按钮以选择资产文件。 在 MetaHumans 文件夹外创建另一个副本。
+- 打开新的绑定资产，将原始的 MetaHuman 面部网格指定为“源骨骼网格”，并将您自己的面部网格指定为“目标骨骼网格”
+- 在你的 MetaHuman 蓝图中分配你的新 Bindind 资产。
